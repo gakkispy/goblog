@@ -1,7 +1,7 @@
 /*
  * @Date: 2023-01-16 14:28:24
  * @LastEditors: gakkispy && yaosenjun@cii.com
- * @LastEditTime: 2023-01-17 09:15:32
+ * @LastEditTime: 2023-01-17 09:24:39
  * @FilePath: /goblog/main.go
  */
 package main
@@ -12,6 +12,7 @@ import (
 )
 
 func handleFunc(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if r.URL.Path == "/" {
 		fmt.Fprint(w, "<h1>Hello, 欢迎来到 goblog home page !</h1>")
 	} else if r.URL.Path == "/about" {
