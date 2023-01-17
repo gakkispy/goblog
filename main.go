@@ -1,7 +1,7 @@
 /*
  * @Date: 2023-01-16 14:28:24
  * @LastEditors: gakkispy && yaosenjun@cii.com
- * @LastEditTime: 2023-01-17 12:59:58
+ * @LastEditTime: 2023-01-17 13:12:16
  * @FilePath: /goblog/main.go
  */
 package main
@@ -9,17 +9,13 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"strings"
+
+	"github.com/gorilla/mux"
 )
 
 func defaultHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if r.URL.Path == "/" {
-		fmt.Fprint(w, "<h1>Hello, 欢迎来到 goblog home page !</h1>")
-	} else {
-		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprint(w, "<h1>Hello, 这里是 goblog 404 page !</h1>")
-	}
+	fmt.Fprint(w, "<h1>Hello, 欢迎来到 goblog home page !</h1>")
 }
 
 func aboutHandler(w http.ResponseWriter, r *http.Request) {
@@ -28,28 +24,52 @@ func aboutHandler(w http.ResponseWriter, r *http.Request) {
 		"<a href='mailto:yaosenjun168@live.cn'>yaosenjun168@live.cn</a>。")
 }
 
-func main() {
-	router := http.NewServeMux()
+func notFoundHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusNotFound)
+	fmt.Fprint(w, "<h1>Hello, 这里是 goblog 404 page !</h1>")
+}
 
-	router.HandleFunc("/", defaultHandler)
-	router.HandleFunc("/about", aboutHandler)
+func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	vars := mux.Vars(r)
+	id := vars["id"]
+	fmt.Fprint(w, "文章 ID："+id)
+}
+
+func articlesIndexHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	fmt.Fprint(w, "显示文章列表")
+}
+
+func articlesCreateHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	fmt.Fprint(w, "创建新的文章")
+}
+
+func main() {
+	router := mux.NewRouter()
+
+	router.HandleFunc("/", defaultHandler).Methods("GET").Name("home")
+	router.HandleFunc("/about", aboutHandler).Methods("GET").Name("about")
+
+	// 404
+	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 
 	// 文章详情
-	router.HandleFunc("/articles/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		id := strings.SplitN(r.URL.Path, "/", 3)[2]
-		fmt.Fprint(w, "文章 ID："+id)
-	})
+	router.HandleFunc("/articles/{id:[0-9]+}", articlesShowHandler).Methods("GET").Name("articles.show")
 
 	// 列表 or 创建
-	router.HandleFunc("/articles", func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case "GET":
-			fmt.Fprint(w, "显示文章列表")
-		case "POST":
-			fmt.Fprint(w, "创建新的文章")
-		}
-	})
+	router.HandleFunc("/articles", articlesIndexHandler).Methods("GET").Name("articles.index")
+	router.HandleFunc("/articles", articlesCreateHandler).Methods("POST").Name("articles.create")
+
+	// 生成 URL
+	homeURL, _ := router.Get("home").URL()
+	fmt.Println(homeURL)
+	aboutURL, _ := router.Get("about").URL()
+	fmt.Println(aboutURL)
+	articlesShowURL, _ := router.Get("articles.show").URL("id", "1")
+	fmt.Println(articlesShowURL)
 
 	http.ListenAndServe(":3000", router)
 }
