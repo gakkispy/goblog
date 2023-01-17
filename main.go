@@ -1,7 +1,7 @@
 /*
  * @Date: 2023-01-16 14:28:24
  * @LastEditors: gakkispy && yaosenjun168@live.cn
- * @LastEditTime: 2023-01-17 17:01:41
+ * @LastEditTime: 2023-01-17 17:21:22
  * @FilePath: /goblog/main.go
  */
 package main
@@ -9,6 +9,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 )
@@ -51,6 +52,17 @@ func forceHTMLMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func removeTrailingSlash(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			r.URL.Path = strings.TrimSuffix(r.URL.Path, "/")
+		}
+
+		// 继续处理请求
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 	router := mux.NewRouter()
 
@@ -78,5 +90,5 @@ func main() {
 	articlesShowURL, _ := router.Get("articles.show").URL("id", "1")
 	fmt.Println(articlesShowURL)
 
-	http.ListenAndServe(":3000", router)
+	http.ListenAndServe(":3000", removeTrailingSlash(router))
 }
