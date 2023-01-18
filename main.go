@@ -1,7 +1,7 @@
 /*
  * @Date: 2023-01-16 14:28:24
  * @LastEditors: gakkispy && yaosenjun168@live.cn
- * @LastEditTime: 2023-01-18 10:27:59
+ * @LastEditTime: 2023-01-18 11:10:04
  * @FilePath: /goblog/main.go
  */
 package main
@@ -49,7 +49,7 @@ func articlesCreateHandler(w http.ResponseWriter, r *http.Request) {
 			<title>创建文章 -- gakkispy's Go blog</title>
 		</head>
 		<body>
-			<form action="%s" method="POST">
+			<form action="%s?test=data" method="POST">
 				<div>
 					<label for="title">标题</label>
 					<input type="text" name="title" id="title">
@@ -69,7 +69,22 @@ func articlesCreateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func articlesStoreHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "保存新建的文章")
+	err := r.ParseForm()
+	if err != nil {
+		// TODO: 错误处理
+		fmt.Fprintf(w, "请提供正确的数据！")
+		return
+	}
+
+	title := r.PostFormValue("title")
+	body := r.PostFormValue("body")
+
+	fmt.Fprintf(w, "标题：%s；内容：%s", title, body)
+
+}
+
+func Fprintf(w http.ResponseWriter, s string) {
+	panic("unimplemented")
 }
 
 func forceHTMLMiddleware(next http.Handler) http.Handler {
