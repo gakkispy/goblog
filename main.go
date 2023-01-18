@@ -1,7 +1,7 @@
 /*
  * @Date: 2023-01-16 14:28:24
  * @LastEditors: gakkispy && yaosenjun168@live.cn
- * @LastEditTime: 2023-01-18 14:13:53
+ * @LastEditTime: 2023-01-18 16:51:32
  * @FilePath: /goblog/main.go
  */
 package main
@@ -189,9 +189,23 @@ func checkError(err error) {
 	}
 }
 
+func createTables() {
+	createArticlesSQL := `CREATE TABLE IF NOT EXISTS articles (
+		id BIGINT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
+		title VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+		body LONGTEXT COLLATE utf8mb4_unicode_ci NOT NULL,
+		created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+		updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+	);`
+
+	_, err := db.Exec(createArticlesSQL)
+	checkError(err)
+}
+
 func main() {
 	// router := mux.NewRouter()
 	initDB()
+	createTables()
 
 	router.HandleFunc("/", defaultHandler).Methods("GET").Name("home")
 	router.HandleFunc("/about", aboutHandler).Methods("GET").Name("about")
