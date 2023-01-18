@@ -1,7 +1,7 @@
 /*
  * @Date: 2023-01-16 14:28:24
  * @LastEditors: gakkispy && yaosenjun168@live.cn
- * @LastEditTime: 2023-01-17 17:21:22
+ * @LastEditTime: 2023-01-18 10:27:59
  * @FilePath: /goblog/main.go
  */
 package main
@@ -13,6 +13,8 @@ import (
 
 	"github.com/gorilla/mux"
 )
+
+var router = mux.NewRouter()
 
 func defaultHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "<h1>Hello, 欢迎来到 goblog home page !</h1>")
@@ -39,7 +41,35 @@ func articlesIndexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func articlesCreateHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "创建新的文章")
+	html := `
+		<!DOCTYPE html>
+		<html lang="en">
+		<head>
+			<meta charset="UTF-8">
+			<title>创建文章 -- gakkispy's Go blog</title>
+		</head>
+		<body>
+			<form action="%s" method="POST">
+				<div>
+					<label for="title">标题</label>
+					<input type="text" name="title" id="title">
+				</div>
+				<div>
+					<label for="body">内容</label>
+					<textarea name="body" id="body" cols="30" rows="10"></textarea>
+				</div>
+				<button type="submit">提交</button>
+			</form>
+		</body>
+		</html>
+	`
+
+	storeURL, _ := router.Get("articles.store").URL()
+	fmt.Fprintf(w, html, storeURL)
+}
+
+func articlesStoreHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, "保存新建的文章")
 }
 
 func forceHTMLMiddleware(next http.Handler) http.Handler {
@@ -64,7 +94,7 @@ func removeTrailingSlash(next http.Handler) http.Handler {
 }
 
 func main() {
-	router := mux.NewRouter()
+	// router := mux.NewRouter()
 
 	router.HandleFunc("/", defaultHandler).Methods("GET").Name("home")
 	router.HandleFunc("/about", aboutHandler).Methods("GET").Name("about")
@@ -77,18 +107,11 @@ func main() {
 
 	// 列表 or 创建
 	router.HandleFunc("/articles", articlesIndexHandler).Methods("GET").Name("articles.index")
-	router.HandleFunc("/articles", articlesCreateHandler).Methods("POST").Name("articles.create")
+	router.HandleFunc("/articles", articlesStoreHandler).Methods("POST").Name("articles.store")
+	router.HandleFunc("/articles/create", articlesCreateHandler).Methods("GET").Name("articles.create")
 
 	// 中间件：强制 Content-Type 为 HTML
 	router.Use(forceHTMLMiddleware)
-
-	// 生成 URL
-	homeURL, _ := router.Get("home").URL()
-	fmt.Println(homeURL)
-	aboutURL, _ := router.Get("about").URL()
-	fmt.Println(aboutURL)
-	articlesShowURL, _ := router.Get("articles.show").URL("id", "1")
-	fmt.Println(articlesShowURL)
 
 	http.ListenAndServe(":3000", removeTrailingSlash(router))
 }
