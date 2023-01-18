@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>创建文章 -- gakkispy's GO blog</title>
+    <style type="text/css">.error {color: red;}</style>
+</head>
+<body>
+    <h1>创建文章</h1>
+    <form action="{{ .URL }}" method="post">
+        <p><input tuype="text" name="title" placeholder="标题" value="{{ .Title }}"></p>
+        {{ with .Errors.title }}
+            <p class="error">{{ . }}</p>
+        {{ end }}
+        <p><textarea name="body" placeholder="内容" cols="30" rows="10">{{ .Body }}</textarea></p>
+        {{ with .Errors.body }}
+            <p class="error">{{ . }}</p>
+        {{ end }}
+        <p><button type="submit">创建</button></p>
+    </form>
+</body>
+</html>

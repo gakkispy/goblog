@@ -1,7 +1,7 @@
 /*
  * @Date: 2023-01-16 14:28:24
  * @LastEditors: gakkispy && yaosenjun168@live.cn
- * @LastEditTime: 2023-01-18 13:28:35
+ * @LastEditTime: 2023-01-18 13:39:51
  * @FilePath: /goblog/main.go
  */
 package main
@@ -44,31 +44,26 @@ func articlesIndexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func articlesCreateHandler(w http.ResponseWriter, r *http.Request) {
-	html := `
-		<!DOCTYPE html>
-		<html lang="en">
-		<head>
-			<meta charset="UTF-8">
-			<title>创建文章 -- gakkispy's Go blog</title>
-		</head>
-		<body>
-			<form action="%s?test=data" method="POST">
-				<div>
-					<label for="title">标题</label>
-					<input type="text" name="title" id="title">
-				</div>
-				<div>
-					<label for="body">内容</label>
-					<textarea name="body" id="body" cols="30" rows="10"></textarea>
-				</div>
-				<button type="submit">提交</button>
-			</form>
-		</body>
-		</html>
-	`
 
 	storeURL, _ := router.Get("articles.store").URL()
-	fmt.Fprintf(w, html, storeURL)
+	data := ArticlesFormData{
+		Title:  "",
+		Body:   "",
+		URL:    storeURL,
+		Errors: nil,
+	}
+
+	tmpl, err :=
+		template.ParseFiles("resources/views/articles/create.gohtml")
+	if err != nil {
+		panic(err)
+	}
+
+	err = tmpl.Execute(w, data)
+	if err != nil {
+		panic(err)
+	}
+
 }
 
 // ArticlesFormData 创建博文表单数据
@@ -101,29 +96,6 @@ func articlesStoreHandler(w http.ResponseWriter, r *http.Request) {
 
 	// 如果有错误，重新显示表单
 	if len(errors) > 0 {
-		html := `
-			<!DOCTYPE html>
-			<html lang="en">
-			<head>
-				<meta charset="UTF-8">
-				<title>创建文章 -- gakkispy's Go blog</title>
-				<style type="text/css">.error {color: red;}</style>
-			</head>
-			<body>
-				<form action="{{ .URL }}" method="POST">
-					<p><input type="text" name="title" value="{{ .Title }}"></p>
-					{{ with .Errors.title }}
-						<p class="error">{{ . }}</p>
-					{{ end }}
-					<p><textarea name="body" cols="30" rows="10">{{ .Body }}</textarea></p>
-					{{ with .Errors.body }}
-						<p class="error">{{ . }}</p>
-					{{ end }}
-					<p><button type="submit">提交</button></p>
-				</form>
-			</body>
-			</html>
-		`
 
 		storeURL, _ := router.Get("articles.store").URL()
 
@@ -133,7 +105,7 @@ func articlesStoreHandler(w http.ResponseWriter, r *http.Request) {
 			URL:    storeURL,
 			Errors: errors,
 		}
-		tmpl, err := template.New("articles.create").Parse(html)
+		tmpl, err := template.ParseFiles("resources/views/articles/create.gohtml")
 		if err != nil {
 			panic(err)
 		}
