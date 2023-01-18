@@ -1,15 +1,18 @@
 /*
  * @Date: 2023-01-16 14:28:24
  * @LastEditors: gakkispy && yaosenjun168@live.cn
- * @LastEditTime: 2023-01-18 11:10:04
+ * @LastEditTime: 2023-01-18 13:28:35
  * @FilePath: /goblog/main.go
  */
 package main
 
 import (
 	"fmt"
+	"html/template"
 	"net/http"
+	"net/url"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/gorilla/mux"
 )
@@ -68,23 +71,87 @@ func articlesCreateHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, html, storeURL)
 }
 
-func articlesStoreHandler(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
-	if err != nil {
-		// TODO: 错误处理
-		fmt.Fprintf(w, "请提供正确的数据！")
-		return
-	}
+// ArticlesFormData 创建博文表单数据
+type ArticlesFormData struct {
+	Title  string
+	Body   string
+	URL    *url.URL
+	Errors map[string]string
+}
 
+func articlesStoreHandler(w http.ResponseWriter, r *http.Request) {
 	title := r.PostFormValue("title")
 	body := r.PostFormValue("body")
 
-	fmt.Fprintf(w, "标题：%s；内容：%s", title, body)
+	errors := map[string]string{}
 
-}
+	// 验证标题
+	if title == "" {
+		errors["title"] = "标题不能为空"
+	} else if utf8.RuneCountInString(title) < 3 || utf8.RuneCountInString(title) > 40 {
+		errors["title"] = "标题长度必须介于 3 - 40 个字符之间"
+	}
 
-func Fprintf(w http.ResponseWriter, s string) {
-	panic("unimplemented")
+	// 验证内容
+	if body == "" {
+		errors["body"] = "内容不能为空"
+	} else if len(body) < 10 {
+		errors["body"] = "内容不能少于 10 个字符"
+	}
+
+	// 如果有错误，重新显示表单
+	if len(errors) > 0 {
+		html := `
+			<!DOCTYPE html>
+			<html lang="en">
+			<head>
+				<meta charset="UTF-8">
+				<title>创建文章 -- gakkispy's Go blog</title>
+				<style type="text/css">.error {color: red;}</style>
+			</head>
+			<body>
+				<form action="{{ .URL }}" method="POST">
+					<p><input type="text" name="title" value="{{ .Title }}"></p>
+					{{ with .Errors.title }}
+						<p class="error">{{ . }}</p>
+					{{ end }}
+					<p><textarea name="body" cols="30" rows="10">{{ .Body }}</textarea></p>
+					{{ with .Errors.body }}
+						<p class="error">{{ . }}</p>
+					{{ end }}
+					<p><button type="submit">提交</button></p>
+				</form>
+			</body>
+			</html>
+		`
+
+		storeURL, _ := router.Get("articles.store").URL()
+
+		data := ArticlesFormData{
+			Title:  title,
+			Body:   body,
+			URL:    storeURL,
+			Errors: errors,
+		}
+		tmpl, err := template.New("articles.create").Parse(html)
+		if err != nil {
+			panic(err)
+		}
+
+		err = tmpl.Execute(w, data)
+		if err != nil {
+			panic(err)
+		}
+
+	} else {
+		// 显示验证通过
+		fmt.Fprintf(w, "验证通过<br>")
+		fmt.Fprintf(w, "标题：%s<br>", title)
+		fmt.Fprintf(w, "内容：%s<br>", body)
+		fmt.Fprintf(w, "标题的长度：%d<br>", len(title))
+		fmt.Fprintf(w, "内容的长度：%d<br>", len(body))
+	}
+
 }
 
 func forceHTMLMiddleware(next http.Handler) http.Handler {
