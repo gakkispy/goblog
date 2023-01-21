@@ -1,7 +1,7 @@
 /*
  * @Date: 2023-01-16 14:28:24
  * @LastEditors: gakkispy && yaosenjun168@live.cn
- * @LastEditTime: 2023-01-18 16:51:32
+ * @LastEditTime: 2023-01-21 16:49:12
  * @FilePath: /goblog/main.go
  */
 package main
@@ -13,6 +13,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -121,14 +122,51 @@ func articlesStoreHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 	} else {
-		// 显示验证通过
-		fmt.Fprintf(w, "验证通过<br>")
-		fmt.Fprintf(w, "标题：%s<br>", title)
-		fmt.Fprintf(w, "内容：%s<br>", body)
-		fmt.Fprintf(w, "标题的长度：%d<br>", len(title))
-		fmt.Fprintf(w, "内容的长度：%d<br>", len(body))
+		// 保存到数据库
+		lastInsertID, err := saveArticleToDB(title, body)
+		if lastInsertID > 0 {
+			fmt.Fprintf(w, "文章创建成功，ID 为 "+strconv.FormatInt(lastInsertID, 10))
+		} else {
+			checkError(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "500 服务器内部错误")
+		}
 	}
 
+}
+
+func saveArticleToDB(title string, body string) (int64, error) {
+	// 变量初始化
+	var (
+		id   int64
+		err  error
+		rs   sql.Result
+		stmt *sql.Stmt
+	)
+
+	// 1. 获取一个 prepare 声明语句
+	stmt, err = db.Prepare("INSERT INTO articles (title, body, created_at, updated_at) VALUES (?, ?, ?, ?)")
+	// 例行错误检测
+	if err != nil {
+		return 0, err
+	}
+
+	// 2. 在此函数运行结束后关闭此语句，防止占用 SQL 连接
+	defer stmt.Close()
+
+	// 3. 执行 SQL 语句， 传参进入绑定的内容
+	rs, err = stmt.Exec(title, body, time.Now(), time.Now())
+	// 例行错误检测
+	if err != nil {
+		return 0, err
+	}
+
+	// 4. 获取插入的 ID，若没有插入则返回 0，若有则返回自增 ID
+	if id, err = rs.LastInsertId(); id > 0 {
+		return id, nil
+	}
+
+	return 0, err
 }
 
 func forceHTMLMiddleware(next http.Handler) http.Handler {
