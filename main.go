@@ -1,7 +1,7 @@
 /*
  * @Date: 2023-01-16 14:28:24
  * @LastEditors: gakkispy && yaosenjun168@live.cn
- * @LastEditTime: 2023-01-21 16:49:12
+ * @LastEditTime: 2023-01-21 20:04:00
  * @FilePath: /goblog/main.go
  */
 package main
@@ -39,10 +39,45 @@ func notFoundHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "<h1>Hello, 这里是 goblog 404 page !</h1>")
 }
 
+// Article 文章数据结构体
+type Article struct {
+	ID        int64
+	Title     string
+	Body      string
+	CreatedAt mysql.NullTime
+	UpdateAt  mysql.NullTime
+}
+
 func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
+	// 1. 获取 URL 参数
 	vars := mux.Vars(r)
 	id := vars["id"]
-	fmt.Fprint(w, "文章 ID："+id)
+
+	// 2. 读取对应的文章数据
+	article := Article{}
+	query := "SELECT * FROM articles WHERE id = ?"
+	err := db.QueryRow(query, id).Scan(&article.ID, &article.Title, &article.Body, &article.CreatedAt, &article.UpdateAt)
+
+	// 3. 如果出现错误
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// 3.1 数据未找到
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprint(w, "404 文章未找到")
+		} else {
+			// 3.2 数据库错误
+			checkError(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintf(w, "500 服务器内部错误")
+		}
+	} else {
+		// 4. 读取成功，显示文章
+		tmpl, err := template.ParseFiles("resources/views/articles/show.gohtml")
+		checkError(err)
+
+		err = tmpl.Execute(w, article)
+		checkError(err)
+	}
 }
 
 func articlesIndexHandler(w http.ResponseWriter, r *http.Request) {
