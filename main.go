@@ -1,7 +1,7 @@
 /*
  * @Date: 2023-01-16 14:28:24
  * @LastEditors: gakkispy && yaosenjun168@live.cn
- * @LastEditTime: 2023-01-22 19:04:19
+ * @LastEditTime: 2023-01-22 21:15:38
  * @FilePath: /goblog/main.go
  */
 package main
@@ -46,6 +46,16 @@ type Article struct {
 	Body      string
 	CreatedAt mysql.NullTime
 	UpdateAt  mysql.NullTime
+}
+
+func (a Article) Link() string {
+	showURL, err := router.Get("articles.show").URL("id", strconv.FormatInt(a.ID, 10))
+	if err != nil {
+		checkError(err)
+		return ""
+	}
+
+	return showURL.String()
 }
 
 func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
@@ -174,7 +184,7 @@ func articlesUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			query := "UPDATE articles SET title = ?, body = ? WHERE id = ?"
 
 			rs, err := db.Exec(query, title, body, id)
-			
+
 			if err != nil {
 				checkError(err)
 				w.WriteHeader(http.StatusInternalServerError)
@@ -193,7 +203,33 @@ func articlesUpdateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func articlesIndexHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "显示文章列表")
+	// 1. 执行查询语句，返回一个结果集
+	rows, err := db.Query("SELECT id, title, body FROM articles")
+	checkError(err)
+	defer rows.Close()
+
+	var articles []Article
+	// 2. 遍历结果集
+	for rows.Next() {
+		var article Article
+		// 2.1 读取每一行数据
+		err := rows.Scan(&article.ID, &article.Title, &article.Body)
+		checkError(err)
+		// 2.2 添加到 articles 切片中
+		articles = append(articles, article)
+	}
+
+	// 2.3 检查遍历过程中是否出现错误
+	err = rows.Err()
+	checkError(err)
+
+	// 3. 加载模板文件
+	tmpl, err := template.ParseFiles("resources/views/articles/index.gohtml")
+	checkError(err)
+
+	// 4. 渲染模板，并将数据传递给模板
+	err = tmpl.Execute(w, articles)
+	checkError(err)
 }
 
 func articlesCreateHandler(w http.ResponseWriter, r *http.Request) {
@@ -227,14 +263,13 @@ type ArticlesFormData struct {
 	Errors map[string]string
 }
 
-func validateArticleFormData(title string, body string) map[string]string
-{
+func validateArticleFormData(title string, body string) map[string]string {
 	errors := make(map[string]string)
 	// 验证标题
 	if title == "" {
 		errors["title"] = "标题不能为空"
 	} else if utf8.RuneCountInString(title) < 3 ||
-	utf8.RuneCountInString(title) > 40 {
+		utf8.RuneCountInString(title) > 40 {
 		errors["title"] = "标题长度需要介于 3-40"
 	}
 
