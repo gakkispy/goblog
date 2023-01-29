@@ -1,7 +1,7 @@
 /*
  * @Date: 2023-01-16 14:28:24
  * @LastEditors: gakkispy && yaosenjun168@live.cn
- * @LastEditTime: 2023-01-22 21:46:48
+ * @LastEditTime: 2023-01-29 16:11:28
  * @FilePath: /goblog/main.go
  */
 package main
@@ -9,6 +9,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"goblog/pkg/route"
 	"html/template"
 	"log"
 	"net/http"
@@ -22,7 +23,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var router = mux.NewRouter()
+var router *mux.Router
 var db *sql.DB
 
 func defaultHandler(w http.ResponseWriter, r *http.Request) {
@@ -58,17 +59,6 @@ func (a Article) Link() string {
 	return showURL.String()
 }
 
-// RouteName2URL 通过路由名称和参数生成 URL
-func RouteName2URL(routeName string, pairs ...string) string {
-	url, err := router.Get(routeName).URL(pairs...)
-	if err != nil {
-		checkError(err)
-		return ""
-	}
-
-	return url.String()
-}
-
 // Int64ToString int64 转 string
 func Int64ToString(num int64) string {
 	return strconv.FormatInt(num, 10)
@@ -97,7 +87,7 @@ func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
 		// 4. 读取成功，显示文章
 		tmpl, err := template.New("show.gohtml").
 			Funcs(template.FuncMap{
-				"RouteName2URL": RouteName2URL,
+				"RouteName2URL": route.Name2URL,
 				"Int64ToString": Int64ToString,
 			}).
 			ParseFiles("resources/views/articles/show.gohtml")
@@ -514,6 +504,9 @@ func main() {
 	// router := mux.NewRouter()
 	initDB()
 	createTables()
+
+	route.InitializeRouter()
+	router = route.Router
 
 	router.HandleFunc("/", defaultHandler).Methods("GET").Name("home")
 	router.HandleFunc("/about", aboutHandler).Methods("GET").Name("about")
