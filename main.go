@@ -1,7 +1,7 @@
 /*
  * @Date: 2023-01-16 14:28:24
  * @LastEditors: gakkispy && yaosenjun168@live.cn
- * @LastEditTime: 2023-01-30 16:34:29
+ * @LastEditTime: 2023-01-30 17:03:35
  * @FilePath: /goblog/main.go
  */
 package main
@@ -373,6 +373,7 @@ func main() {
 	database.Initialize()
 	db = database.DB
 
+	bootstrap.SetupDB()
 	router = bootstrap.SetupRoute()
 
 	router.HandleFunc("/articles", articlesStoreHandler).Methods("POST").Name("articles.store")
