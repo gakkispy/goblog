@@ -1,12 +1,13 @@
 /*
  * @Date: 2023-01-29 11:28:58
  * @LastEditors: gakkispy && yaosenjun168@live.cn
- * @LastEditTime: 2023-01-29 16:19:20
+ * @LastEditTime: 2023-01-30 14:49:50
  * @FilePath: /goblog/pkg/route/router.go
  */
 package route
 
 import (
+	"goblog/routes"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -18,6 +19,7 @@ var Router *mux.Router
 // InitializeRouter initializes the global Router variable.
 func InitializeRouter() {
 	Router = mux.NewRouter()
+	routes.RegisterWebRoutes(Router)
 }
 
 // RouteName2URL is a map of route name to URL.

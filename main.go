@@ -1,7 +1,7 @@
 /*
  * @Date: 2023-01-16 14:28:24
  * @LastEditors: gakkispy && yaosenjun168@live.cn
- * @LastEditTime: 2023-01-30 12:50:11
+ * @LastEditTime: 2023-01-30 15:21:37
  * @FilePath: /goblog/main.go
  */
 package main
@@ -449,12 +449,6 @@ func main() {
 
 	route.InitializeRouter()
 	router = route.Router
-
-	router.HandleFunc("/", defaultHandler).Methods("GET").Name("home")
-	router.HandleFunc("/about", aboutHandler).Methods("GET").Name("about")
-
-	// 404
-	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 
 	// 文章详情
 	router.HandleFunc("/articles/{id:[0-9]+}", articlesShowHandler).Methods("GET").Name("articles.show")
