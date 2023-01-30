@@ -1,7 +1,7 @@
 /*
  * @Date: 2023-01-16 14:28:24
  * @LastEditors: gakkispy && yaosenjun168@live.cn
- * @LastEditTime: 2023-01-30 11:25:54
+ * @LastEditTime: 2023-01-30 11:28:17
  * @FilePath: /goblog/main.go
  */
 package main
@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"goblog/pkg/logger"
 	"goblog/pkg/route"
+	"goblog/pkg/types"
 	"html/template"
 	"net/http"
 	"net/url"
@@ -59,11 +60,6 @@ func (a Article) Link() string {
 	return showURL.String()
 }
 
-// Int64ToString int64 转 string
-func Int64ToString(num int64) string {
-	return strconv.FormatInt(num, 10)
-}
-
 func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
 	// 1. 获取 URL 参数
 	id := route.GetRouteVariable("id", r)
@@ -88,7 +84,7 @@ func articlesShowHandler(w http.ResponseWriter, r *http.Request) {
 		tmpl, err := template.New("show.gohtml").
 			Funcs(template.FuncMap{
 				"RouteName2URL": route.Name2URL,
-				"Int64ToString": Int64ToString,
+				"Int64ToString": types.Int64ToString,
 			}).
 			ParseFiles("resources/views/articles/show.gohtml")
 		logger.LogError(err)
