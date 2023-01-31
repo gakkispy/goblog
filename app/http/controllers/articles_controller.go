@@ -1,7 +1,7 @@
 /*
  * @Date: 2023-01-30 15:29:30
  * @LastEditors: gakkispy && yaosenjun168@live.cn
- * @LastEditTime: 2023-01-31 15:52:15
+ * @LastEditTime: 2023-01-31 16:03:39
  * @FilePath: /goblog/app/http/controllers/articles_controller.go
  */
 package controllers
@@ -286,6 +286,51 @@ func (ac ArticlesController) Update(w http.ResponseWriter, r *http.Request) {
 			if rowsAffected > 0 {
 				showURL := route.Name2URL("articles.show", "id", id)
 				http.Redirect(w, r, showURL, http.StatusFound)
+			}
+		}
+	}
+}
+
+// Article.Delete handles requests to the /articles/{id}/delete route
+func (ac ArticlesController) Delete(w http.ResponseWriter, r *http.Request) {
+	// 1. 获取 URL 参数
+	id := route.GetRouteVariable("id", r)
+
+	// 2. 读取对应的文章数据
+	article, err := article.Get(id)
+
+	// 3. 如果出现错误
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			// 3.1 数据未找到
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprintf(w, "404 文章未找到")
+		} else {
+			// 3.2 数据库错误
+			logger.LogError(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintf(w, "500 服务器内部错误")
+		}
+	} else {
+		// 4. 未出现错误，执行删除操作
+		rowsAffected, err := article.Delete()
+
+		// 4.1 发生错误
+		if err != nil {
+			// 预计是 SQL 错误
+			logger.LogError(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintf(w, "500 服务器内部错误")
+		} else {
+			// 4.2 未发生错误
+			if rowsAffected > 0 {
+				// 4.2.1 影响行数大于 0，删除成功
+				indexURL := route.Name2URL("articles.index")
+				http.Redirect(w, r, indexURL, http.StatusFound)
+			} else {
+				// Edge case
+				w.WriteHeader(http.StatusNotFound)
+				fmt.Fprintf(w, "404 文章未找到")
 			}
 		}
 	}
