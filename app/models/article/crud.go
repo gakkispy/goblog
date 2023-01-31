@@ -1,7 +1,7 @@
 /*
  * @Date: 2023-01-31 09:08:50
  * @LastEditors: gakkispy && yaosenjun168@live.cn
- * @LastEditTime: 2023-01-31 13:39:56
+ * @LastEditTime: 2023-01-31 15:03:22
  * @FilePath: /goblog/app/models/article/crud.go
  */
 package article
@@ -47,4 +47,14 @@ func (article *Article) Create() (err error) {
 		return err
 	}
 	return result
+}
+
+// Update 更新文章
+func (article *Article) Update() (rowsAffected int64, err error) {
+	result := model.DB.Save(&article)
+	if err = result.Error; err != nil {
+		logger.LogError(err)
+		return 0, err
+	}
+	return result.RowsAffected, nil
 }

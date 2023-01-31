@@ -1,7 +1,7 @@
 /*
  * @Date: 2023-01-30 14:13:54
  * @LastEditors: gakkispy && yaosenjun168@live.cn
- * @LastEditTime: 2023-01-31 13:43:23
+ * @LastEditTime: 2023-01-31 14:29:41
  * @FilePath: /goblog/routes/web.go
  */
 package routes
@@ -27,5 +27,8 @@ func RegisterWebRoutes(r *mux.Router) {
 	r.HandleFunc("/articles/{id:[0-9]+}", ac.Show).Methods("GET").Name("articles.show")
 	r.HandleFunc("/articles", ac.Store).Methods("POST").Name("articles.store")
 	r.HandleFunc("/articles/create", ac.Create).Methods("GET").Name("articles.create")
+
+	r.HandleFunc("/articles/{id:[0-9]+}/edit", ac.Edit).Methods("GET").Name("articles.edit")
+	r.HandleFunc("/articles/{id:[0-9]+}", ac.Update).Methods("POST").Name("articles.update")
 
 }

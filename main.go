@@ -1,7 +1,7 @@
 /*
  * @Date: 2023-01-16 14:28:24
  * @LastEditors: gakkispy && yaosenjun168@live.cn
- * @LastEditTime: 2023-01-31 14:13:22
+ * @LastEditTime: 2023-01-31 14:32:06
  * @FilePath: /goblog/main.go
  */
 package main
@@ -12,7 +12,6 @@ import (
 	"goblog/bootstrap"
 	"goblog/pkg/database"
 	"goblog/pkg/logger"
-	"html/template"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -41,42 +40,6 @@ func getArticleByID(id string) (Article, error) {
 	return article, err
 }
 
-func articlesEditHandler(w http.ResponseWriter, r *http.Request) {
-	// 1. 获取 URL 参数
-	id := getRouteVariable("id", r)
-
-	// 2. 读取对应的文章数据
-	article, err := getArticleByID(id)
-
-	// 3. 如果出现错误
-	if err != nil {
-		if err == sql.ErrNoRows {
-			// 3.1 数据未找到
-			w.WriteHeader(http.StatusNotFound)
-			fmt.Fprintf(w, "404 文章未找到")
-		} else {
-			// 3.2 数据库错误
-			logger.LogError(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprint(w, "500 服务器内部错误")
-		}
-	} else {
-		// 4. 读物成功，显示表单
-		updateURL, _ := router.Get("articles.update").URL("id", id)
-		data := ArticlesFormData{
-			Title:  article.Title,
-			Body:   article.Body,
-			URL:    updateURL,
-			Errors: nil,
-		}
-		tmpl, err := template.ParseFiles("resources/views/articles/edit.gohtml")
-		logger.LogError(err)
-
-		err = tmpl.Execute(w, data)
-		logger.LogError(err)
-	}
-}
-
 // ArticlesFormData 文章表单数据
 type ArticlesFormData struct {
 	Title  string
@@ -84,73 +47,6 @@ type ArticlesFormData struct {
 	URL    *url.URL
 	Errors map[string]string
 }
-
-// func articlesUpdateHandler(w http.ResponseWriter, r *http.Request) {
-// 	// 1. 获取 URL 参数
-// 	id := getRouteVariable("id", r)
-
-// 	// 2. 读取对应的文章数据
-// 	_, err := getArticleByID(id)
-
-// 	// 3. 如果出现错误
-// 	if err != nil {
-// 		if err == sql.ErrNoRows {
-// 			// 3.1 数据未找到
-// 			w.WriteHeader(http.StatusNotFound)
-// 			fmt.Fprintf(w, "404 文章未找到")
-// 		} else {
-// 			// 3.2 数据库错误
-// 			logger.LogError(err)
-// 			w.WriteHeader(http.StatusInternalServerError)
-// 			fmt.Fprint(w, "500 服务器内部错误")
-// 		}
-// 	} else {
-// 		// 4. 未出现错误
-
-// 		// 4.1 表单验证
-// 		title := r.PostFormValue("title")
-// 		body := r.PostFormValue("body")
-
-// 		errors := validateArticleFormData(title, body)
-
-// 		// 4.2 如果有错误
-// 		if len(errors) > 0 {
-// 			// 4.2.1 显示重新编辑文章的表单
-// 			updateURL, _ := router.Get("articles.update").URL("id", id)
-// 			data := ArticlesFormData{
-// 				Title:  title,
-// 				Body:   body,
-// 				URL:    updateURL,
-// 				Errors: errors,
-// 			}
-// 			tmpl, err := template.ParseFiles("resources/views/articles/edit.gohtml")
-// 			logger.LogError(err)
-
-// 			err = tmpl.Execute(w, data)
-// 			logger.LogError(err)
-// 		} else {
-// 			// 4.3 如果没有错误
-// 			// 4.3.1 更新文章数据
-// 			query := "UPDATE articles SET title = ?, body = ? WHERE id = ?"
-
-// 			rs, err := db.Exec(query, title, body, id)
-
-// 			if err != nil {
-// 				logger.LogError(err)
-// 				w.WriteHeader(http.StatusInternalServerError)
-// 				fmt.Fprintf(w, "500 服务器内部错误")
-// 			}
-
-// 			// 4.3.2 重定向到文章详情页
-// 			if n, _ := rs.RowsAffected(); n > 0 {
-// 				showURL, _ := router.Get("articles.show").URL("id", id)
-// 				http.Redirect(w, r, showURL.String(), http.StatusFound)
-// 			} else {
-// 				fmt.Fprintf(w, "您未做任何更改！")
-// 			}
-// 		}
-// 	}
-// }
 
 func forceHTMLMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -245,10 +141,6 @@ func main() {
 
 	bootstrap.SetupDB()
 	router = bootstrap.SetupRoute()
-
-	// 更新，编辑
-	router.HandleFunc("/articles/{id:[0-9]+}/edit", articlesEditHandler).Methods("GET").Name("articles.edit")
-	// router.HandleFunc("/articles/{id:[0-9]+}", articlesUpdateHandler).Methods("POST").Name("articles.update")
 
 	// 删除
 	router.HandleFunc("/articles/{id:[0-9]+}/delete", articlesDeleteHandler).Methods("POST").Name("articles.delete")

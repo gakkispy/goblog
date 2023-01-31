@@ -1,7 +1,7 @@
 /*
  * @Date: 2023-01-29 11:28:58
  * @LastEditors: gakkispy && yaosenjun168@live.cn
- * @LastEditTime: 2023-01-31 10:06:20
+ * @LastEditTime: 2023-01-31 14:54:23
  * @FilePath: /goblog/pkg/route/router.go
  */
 package route
@@ -21,7 +21,7 @@ func SetupRoute(r *mux.Router) {
 	route = r
 }
 
-// RouteName2URL is a map of route name to URL.
+// Name2URL is a map of route name to URL.
 func Name2URL(routeName string, pairs ...string) string {
 	url, err := route.Get(routeName).URL(pairs...)
 	if err != nil {
