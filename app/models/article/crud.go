@@ -1,12 +1,13 @@
 /*
  * @Date: 2023-01-31 09:08:50
  * @LastEditors: gakkispy && yaosenjun168@live.cn
- * @LastEditTime: 2023-01-31 11:17:13
+ * @LastEditTime: 2023-01-31 13:39:56
  * @FilePath: /goblog/app/models/article/crud.go
  */
 package article
 
 import (
+	"goblog/pkg/logger"
 	"goblog/pkg/model"
 	"goblog/pkg/types"
 )
@@ -36,4 +37,14 @@ func GetAll() ([]Article, error) {
 	}
 
 	return articles, nil
+}
+
+// Create 创建文章
+func (article *Article) Create() (err error) {
+	result := model.DB.Create(&article).Error
+	if err != nil {
+		logger.LogError(err)
+		return err
+	}
+	return result
 }

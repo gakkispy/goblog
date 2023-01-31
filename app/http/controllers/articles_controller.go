@@ -1,7 +1,7 @@
 /*
  * @Date: 2023-01-30 15:29:30
  * @LastEditors: gakkispy && yaosenjun168@live.cn
- * @LastEditTime: 2023-01-31 11:16:07
+ * @LastEditTime: 2023-01-31 14:25:08
  * @FilePath: /goblog/app/http/controllers/articles_controller.go
  */
 package controllers
@@ -14,15 +14,19 @@ import (
 	"goblog/pkg/types"
 	"html/template"
 	"net/http"
+	"strconv"
+	"time"
+	"unicode/utf8"
 
+	"github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
 )
 
 // ArticlesController is a struct for articles.
 type ArticlesController struct{}
 
-// IndexHandler handles requests to the /articles route
-func (ac ArticlesController) IndexHandler(w http.ResponseWriter, r *http.Request) {
+// Article.Index handles requests to the /articles route
+func (ac ArticlesController) Index(w http.ResponseWriter, r *http.Request) {
 	// 1. ArticlesModel 取出所有文章数据
 	articles, err := article.GetAll()
 
@@ -42,8 +46,8 @@ func (ac ArticlesController) IndexHandler(w http.ResponseWriter, r *http.Request
 
 }
 
-// ShowHandler handles requests to the /articles/{id} route
-func (ac ArticlesController) ShowHandler(w http.ResponseWriter, r *http.Request) {
+// Article.Show handles requests to the /articles/{id} route
+func (ac ArticlesController) Show(w http.ResponseWriter, r *http.Request) {
 	// 1. 获取 URL 参数
 	id := route.GetRouteVariable("id", r)
 
@@ -75,4 +79,104 @@ func (ac ArticlesController) ShowHandler(w http.ResponseWriter, r *http.Request)
 		err = tmpl.Execute(w, article)
 		logger.LogError(err)
 	}
+}
+
+// ArticlesFormData is a struct for articles form data.
+type ArticlesFormData struct {
+	Title  string
+	Body   string
+	URL    string
+	Errors map[string]string
+}
+
+// Article.Create handles requests to the /articles/create route
+func (ac ArticlesController) Create(w http.ResponseWriter, r *http.Request) {
+	storeURL := route.Name2URL("articles.store")
+	data := ArticlesFormData{
+		Title:  "",
+		Body:   "",
+		URL:    storeURL,
+		Errors: nil,
+	}
+
+	tmpl, err :=
+		template.ParseFiles("resources/views/articles/create.gohtml")
+	if err != nil {
+		panic(err)
+	}
+
+	err = tmpl.Execute(w, data)
+	if err != nil {
+		panic(err)
+	}
+
+}
+
+// validateArticleFormData validates the form data from the /articles/create route
+func validateArticleFormData(title string, body string) map[string]string {
+	errors := make(map[string]string)
+	// 验证标题
+	if title == "" {
+		errors["title"] = "标题不能为空"
+	} else if utf8.RuneCountInString(title) < 3 ||
+		utf8.RuneCountInString(title) > 40 {
+		errors["title"] = "标题长度需要介于 3-40"
+	}
+
+	// 验证内容
+	if body == "" {
+		errors["body"] = "内容不能为空"
+	} else if utf8.RuneCountInString(body) < 10 {
+		errors["body"] = "内容长度需大于或等于 10 个字节"
+	}
+
+	return errors
+}
+
+// Article.Store handles requests to the /articles/store route
+func (ac ArticlesController) Store(w http.ResponseWriter, r *http.Request) {
+	title := r.PostFormValue("title")
+	body := r.PostFormValue("body")
+
+	errors := validateArticleFormData(title, body)
+
+	// 如果有错误，重新显示表单
+	if len(errors) > 0 {
+
+		storeURL := route.Name2URL("articles.store")
+
+		data := ArticlesFormData{
+			Title:  title,
+			Body:   body,
+			URL:    storeURL,
+			Errors: errors,
+		}
+		tmpl, err := template.ParseFiles("resources/views/articles/create.gohtml")
+		if err != nil {
+			panic(err)
+		}
+
+		err = tmpl.Execute(w, data)
+		if err != nil {
+			panic(err)
+		}
+
+	} else {
+		// 保存到数据库
+		_article := article.Article{
+			Title:     title,
+			Body:      body,
+			CreatedAt: mysql.NullTime{Time: time.Now(), Valid: true},
+			UpdatedAt: mysql.NullTime{Time: time.Now(), Valid: true},
+		}
+		_article.Create()
+
+		if _article.ID > 0 {
+			fmt.Fprintf(w, "文章创建成功，ID 为 "+strconv.FormatInt(int64(_article.ID), 10))
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, "文章创建失败，请联系管理员.")
+		}
+	}
+
 }
