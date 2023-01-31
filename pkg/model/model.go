@@ -1,7 +1,7 @@
 /*
  * @Date: 2023-01-30 16:54:54
  * @LastEditors: gakkispy && yaosenjun168@live.cn
- * @LastEditTime: 2023-01-31 10:06:45
+ * @LastEditTime: 2023-01-31 11:28:51
  * @FilePath: /goblog/pkg/model/model.go
  */
 package model
@@ -13,6 +13,9 @@ import (
 
 	// mysql driver
 	"gorm.io/driver/mysql"
+
+	//gorm logger
+	gormlogger "gorm.io/gorm/logger"
 )
 
 // DB is a global variable for *gorm.DB.
@@ -27,7 +30,9 @@ func ConnectDB() *gorm.DB {
 	})
 
 	// 准备数据库连接池，连接数据库
-	DB, err = gorm.Open(config, &gorm.Config{})
+	DB, err = gorm.Open(config, &gorm.Config{
+		Logger: gormlogger.Default.LogMode(gormlogger.Info),
+	})
 	logger.LogError(err)
 
 	return DB

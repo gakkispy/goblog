@@ -1,7 +1,7 @@
 /*
  * @Date: 2023-01-16 14:28:24
  * @LastEditors: gakkispy && yaosenjun168@live.cn
- * @LastEditTime: 2023-01-30 17:03:35
+ * @LastEditTime: 2023-01-31 11:44:17
  * @FilePath: /goblog/main.go
  */
 package main
@@ -34,16 +34,6 @@ type Article struct {
 	Body      string
 	CreatedAt mysql.NullTime
 	UpdateAt  mysql.NullTime
-}
-
-func (a Article) Link() string {
-	showURL, err := router.Get("articles.show").URL("id", strconv.FormatInt(a.ID, 10))
-	if err != nil {
-		logger.LogError(err)
-		return ""
-	}
-
-	return showURL.String()
 }
 
 func getArticleByID(id string) (Article, error) {

@@ -1,7 +1,7 @@
 /*
  * @Date: 2023-01-30 14:13:54
  * @LastEditors: gakkispy && yaosenjun168@live.cn
- * @LastEditTime: 2023-01-31 10:06:39
+ * @LastEditTime: 2023-01-31 11:12:51
  * @FilePath: /goblog/routes/web.go
  */
 package routes
@@ -23,6 +23,6 @@ func RegisterWebRoutes(r *mux.Router) {
 
 	// Articles
 	ac := new(controllers.ArticlesController)
-	// r.HandleFunc("/articles", ac.IndexHandler).Methods("GET").Name("articles.index")
+	r.HandleFunc("/articles", ac.IndexHandler).Methods("GET").Name("articles.index")
 	r.HandleFunc("/articles/{id:[0-9]+}", ac.ShowHandler).Methods("GET").Name("articles.show")
 }

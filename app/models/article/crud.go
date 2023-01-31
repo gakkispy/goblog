@@ -1,7 +1,7 @@
 /*
  * @Date: 2023-01-31 09:08:50
  * @LastEditors: gakkispy && yaosenjun168@live.cn
- * @LastEditTime: 2023-01-31 09:10:27
+ * @LastEditTime: 2023-01-31 11:17:13
  * @FilePath: /goblog/app/models/article/crud.go
  */
 package article
@@ -24,4 +24,16 @@ func Get(idstr string) (Article, error) {
 	}
 
 	return article, nil
+}
+
+// GetAll 获取所有文章
+func GetAll() ([]Article, error) {
+	var articles []Article
+	var err error
+
+	if err = model.DB.Find(&articles).Error; err != nil {
+		return articles, err
+	}
+
+	return articles, nil
 }
