@@ -1,7 +1,7 @@
 /*
  * @Date: 2023-01-30 16:54:54
  * @LastEditors: gakkispy && yaosenjun168@live.cn
- * @LastEditTime: 2023-01-30 16:57:35
+ * @LastEditTime: 2023-01-31 10:06:45
  * @FilePath: /goblog/pkg/model/model.go
  */
 package model
@@ -9,7 +9,7 @@ package model
 import (
 	"goblog/pkg/logger"
 
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 
 	// mysql driver
 	"gorm.io/driver/mysql"
