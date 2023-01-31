@@ -1,13 +1,14 @@
 /*
  * @Date: 2023-01-30 14:13:54
  * @LastEditors: gakkispy && yaosenjun168@live.cn
- * @LastEditTime: 2023-01-31 15:58:22
+ * @LastEditTime: 2023-01-31 16:12:20
  * @FilePath: /goblog/routes/web.go
  */
 package routes
 
 import (
 	"goblog/app/http/controllers"
+	"goblog/app/http/middlewares"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -31,5 +32,8 @@ func RegisterWebRoutes(r *mux.Router) {
 	r.HandleFunc("/articles/{id:[0-9]+}/edit", ac.Edit).Methods("GET").Name("articles.edit")
 	r.HandleFunc("/articles/{id:[0-9]+}", ac.Update).Methods("POST").Name("articles.update")
 	r.HandleFunc("/articles/{id:[0-9]+}/delete", ac.Delete).Methods("POST").Name("articles.delete")
+
+	// 中间件：强制 Content-Type 为 HTML
+	r.Use(middlewares.ForceHTML)
 
 }
